@@ -1,0 +1,125 @@
+CREATE SCHEMA OPTITRACK;
+SET SEARCH_PATH TO OPTITRACK;
+
+CREATE TABLE Customer (
+    Mobile_No VARCHAR(15) PRIMARY KEY,
+    Name VARCHAR(100),
+    DOB DATE,
+	Email VARCHAR(100),
+    Address VARCHAR(200)
+);
+
+CREATE TABLE MedicalHistory
+(
+    Patient_ID INT PRIMARY KEY,
+    Mobile_No VARCHAR(15) UNIQUE,
+    Left_Eye_No_Cyl DECIMAL(5,2),
+    Left_Eye_No_Sph DECIMAL(5,2),
+    Left_Eye_No_Deg INT,
+    Right_Eye_No_Cyl DECIMAL(5,2),
+    Right_Eye_No_Sph DECIMAL(5,2),
+    Right_Eye_No_Deg INT,
+    CONSTRAINT FK_MedicalHistory_Customer 
+        FOREIGN KEY (Mobile_No) REFERENCES Customer(Mobile_No)
+);
+
+
+CREATE TABLE LoyaltyProgram (
+    Mobile_No VARCHAR(15) PRIMARY KEY,
+    Join_Date DATE,
+    Points_Earned INT,
+    Redeemed INT,
+    Loyalty_Tier VARCHAR(50),
+    CONSTRAINT FK_Loyalty_Customer FOREIGN KEY (Mobile_No) REFERENCES Customer(Mobile_No)
+);
+CREATE TABLE Branch (
+    Branch_ID INT PRIMARY KEY,
+    Name VARCHAR(100),
+    Contact_No VARCHAR(20),
+    Address VARCHAR(200)
+);
+CREATE TABLE Item (
+    Barcode_No VARCHAR(50) PRIMARY KEY,
+    Avg_Cost_Price DECIMAL(10,2),
+    Sell_Price DECIMAL(10,2),
+    Type VARCHAR(50)
+);
+CREATE TABLE Lens (
+    Barcode_No VARCHAR(50) PRIMARY KEY,
+    Brand VARCHAR(50),
+    Type VARCHAR(50),
+    Color VARCHAR(50),
+    Style VARCHAR(50),
+    CONSTRAINT FK_Lens_Item FOREIGN KEY (Barcode_No) REFERENCES Item(Barcode_No)
+);
+CREATE TABLE Frame (
+    Barcode_No VARCHAR(50) PRIMARY KEY,
+    Brand VARCHAR(50),
+    Style VARCHAR(50),
+    Color VARCHAR(50),
+    Collection VARCHAR(50),
+    CONSTRAINT FK_Frame_Item FOREIGN KEY (Barcode_No) REFERENCES Item(Barcode_No)
+);
+CREATE TABLE Inventory (
+    Branch_ID INT,
+    Barcode_No VARCHAR(50),
+    Stock_Level INT,
+    Reorder_Level INT,
+    PRIMARY KEY (Branch_ID, Barcode_No),
+    CONSTRAINT FK_Inventory_Branch FOREIGN KEY (Branch_ID) REFERENCES Branch(Branch_ID),
+    CONSTRAINT FK_Inventory_Item FOREIGN KEY (Barcode_No) REFERENCES Item(Barcode_No)
+);
+CREATE TABLE Supplier (
+    Supplier_ID INT PRIMARY KEY,
+    Name VARCHAR(100),
+    Contact_No VARCHAR(20),
+    Email VARCHAR(100),
+    Address VARCHAR(200)
+);
+CREATE TABLE Supplies (
+    Supplier_ID INT,
+    Barcode_No VARCHAR(50),
+    Quantity INT,
+    Supply_Price DECIMAL(10,2),
+    PRIMARY KEY (Supplier_ID, Barcode_No),
+    CONSTRAINT FK_Supplies_Supplier FOREIGN KEY (Supplier_ID) REFERENCES Supplier(Supplier_ID),
+    CONSTRAINT FK_Supplies_Item FOREIGN KEY (Barcode_No) REFERENCES Item(Barcode_No)
+);
+CREATE TABLE Sales_Invoice (
+    InvoiceNo INT PRIMARY KEY,
+    Date DATE,
+    Total_Amount DECIMAL(10,2)
+);
+CREATE TABLE Orders (
+    Order_ID INT PRIMARY KEY,
+    Order_Date DATE,
+    Date_Expected_Delivery DATE,
+    InvoiceNo INT,
+    Branch_ID INT,
+    Patient_ID INT,
+    Mobile_No VARCHAR(15),
+    CONSTRAINT FK_Orders_Branch FOREIGN KEY (Branch_ID) REFERENCES Branch(Branch_ID),
+    CONSTRAINT FK_Orders_Patient FOREIGN KEY (Patient_ID) REFERENCES MedicalHistory(Patient_ID),
+    CONSTRAINT FK_Orders_Customer FOREIGN KEY (Mobile_No) REFERENCES Customer(Mobile_No),
+    CONSTRAINT FK_Orders_Invoice FOREIGN KEY (InvoiceNo) REFERENCES Sales_Invoice(InvoiceNo)
+);
+
+CREATE TABLE Include_Items (
+    InvoiceNo INT,
+    Barcode_No VARCHAR(50),
+    Quantity INT,
+    Price DECIMAL(10,2),
+    PRIMARY KEY (InvoiceNo, Barcode_No),
+    CONSTRAINT FK_IncludeItems_Invoice FOREIGN KEY (InvoiceNo) REFERENCES Sales_Invoice(InvoiceNo),
+    CONSTRAINT FK_IncludeItems_Item FOREIGN KEY (Barcode_No) REFERENCES Item(Barcode_No)
+);
+CREATE TABLE Stock_Transaction (
+    Transaction_ID INT PRIMARY KEY,
+    Branch_ID INT,
+    Barcode_No VARCHAR(50),
+    Date DATE,
+    Quantity INT,
+    Type VARCHAR(10),
+    CONSTRAINT FK_StockTrans_Inventory FOREIGN KEY (Branch_ID, Barcode_No)
+        REFERENCES Inventory(Branch_ID, Barcode_No)
+);
