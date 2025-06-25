@@ -1,0 +1,252 @@
+QUERIES
+ 
+ 
+1.Update medical History for a patient
+ 
+UPDATE MedicalHistory
+SET 
+    Left_Eye_No_Cyl = 1.25,
+    Left_Eye_No_Sph = -2.50,
+    Left_Eye_No_Deg = 90,
+    Right_Eye_No_Cyl = 1.00,
+    Right_Eye_No_Sph = -2.00,
+    Right_Eye_No_Deg = 85
+WHERE 
+    Patient_ID = 1 AND Mobile_No=’9876500001’;
+
+
+Use case - 
+This action is used when a patient's eye power details need to be updated. For example, after a new eye test, if the numbers for left or right eye change, the doctor or staff can update the system with the latest information.
+Explanation of What’s Happening -
+Here , The system finds the patient with ID number 1 and mobile number 9876500001.
+Then, it updates their eye details—like the power of the lenses for both left and right eyes—to the new values given by the doctor.
+ 
+ 
+2. Query to get top 3 frame styles sold in  period of last year
+ 
+SELECT F.Style, SUM(II.Quantity) AS Total_Sold
+FROM Include_Items II
+JOIN Sales_Invoice SI ON II.InvoiceNo = SI.InvoiceNo
+JOIN Frame F ON II.Barcode_No = F.Barcode_No
+WHERE EXTRACT(YEAR FROM SI.Date) = 2025  -- Replace with desired year
+GROUP BY F.Style
+ORDER BY Total_Sold DESC
+LIMIT 3;
+
+
+
+
+
+
+3 . Find the selling items across all branches, including supplier name and current inventory levels
+
+SELECT 
+    I.Barcode_No,
+    I.Type,
+    SUM(II.Quantity) AS Total_Sold,
+    S.Name AS Supplier_Name,
+    SUM(Inv.Stock_Level) AS Total_Stock
+FROM 
+    Include_Items II
+JOIN Item I ON II.Barcode_No = I.Barcode_No
+JOIN Supplies SP ON I.Barcode_No = SP.Barcode_No
+JOIN Supplier S ON SP.Supplier_ID = S.Supplier_ID
+JOIN Inventory Inv ON I.Barcode_No = Inv.Barcode_No
+GROUP BY I.Barcode_No, I.Type, S.Name
+ORDER BY Total_Sold DESC;
+
+
+
+
+Use case -
+This action checks which three frame styles were sold the most in the past year.
+Explanation of What’s Happening:
+The system looks at all the sales records from last year, adds up how many of each frame style were sold, and then lists the top three based on quantity. So, for example, if "Classic Black", "Rimless Silver", and "Tortoise Shell" were the most popular in 2025, those would show up.
+
+
+
+
+ 
+4. To get a branch with maximum Total revenue.
+
+
+SELECT O.Branch_ID, B.Name AS Branch_Name, SUM(SI.Total_Amount) AS Total_Revenue
+FROM Sales_Invoice SI
+JOIN Orders O ON SI.InvoiceNo = O.InvoiceNo
+JOIN Branch B ON O.Branch_ID = B.Branch_ID
+WHERE to_char(SI.Date, 'YYYY-MM') = to_char(current_date - INTERVAL '1 month', 'YYYY-MM')
+GROUP BY O.Branch_ID, B.Name
+ORDER BY Total_Revenue DESC
+LIMIT 1;
+ 
+Explanation :
+The to_char function formats the SI.Date into a string in the YYYY-MM format.
+The expression current_date - INTERVAL '1 month' computes a date exactly one month before the current date. It is also formatted to YYYY-MM for comparison:
+ 
+Usecase - 
+This action helps you figure out which branch earned the most money from sales in the previous month.
+Explanation of What’s Happening -
+ The system looks at all the sales invoices from last month. It adds up the total amount earned at each branch and then shows you the one with the highest overall revenue.
+For example, if your branches are in Mumbai, Delhi, and Pune—and Delhi made the most sales in terms of money last month—this report will highlight that.
+
+
+ 
+ 
+5.   Branch-Level Aggregated Sales Report
+ 
+SELECT 
+    B.Branch_ID,
+    B.Name AS Branch_Name,
+    COUNT(DISTINCT O.Order_ID) AS Order_Count,
+    COUNT(DISTINCT O.Mobile_No) AS Unique_Customers,
+    SUM(SI.Total_Amount) AS Total_Revenue,
+    AVG(SI.Total_Amount) AS Avg_Invoice_Amount
+FROM Branch B
+LEFT JOIN Orders O ON B.Branch_ID = O.Branch_ID
+LEFT JOIN Sales_Invoice SI ON O.InvoiceNo = SI.InvoiceNo
+GROUP BY B.Branch_ID, B.Name
+ORDER BY Total_Revenue DESC;
+ 
+SELECT O.Branch_ID,
+       B.Name AS Branch_Name,
+       COUNT(DISTINCT O.Mobile_No) AS Customer_Count
+FROM Orders O
+JOIN Branch B ON O.Branch_ID = B.Branch_ID
+GROUP BY O.Branch_ID, B.Name
+ORDER BY Customer_Count DESC;
+
+
+Usecase -
+This report gives a full overview of how each branch is doing in terms of sales and customers.
+Explanation of What’s Happening -
+For each branch, the system shows: How many total orders were placed , How many unique customers shopped , The total money earned from all sales , The average value of each bill or invoice
+Then it lists all branches in order from highest to lowest total revenue—so you can easily spot which branches are performing best. 
+ 
+6.  List the total Quantity which was supplied outward for a itemwise(Barcode_No) and   branch wise  this month 
+ 
+SELECT BRANCH_ID ,SUM(QUANTITY) FROM STOCK_TRANSACTION 
+WHERE  to_char(Date, 'YYYY-MM') = to_char(current_date - INTERVAL '1 month', ‘YYYY-MM')
+GROUP BY BARCODE_NO,BRANCH_ID;
+
+
+Usecase -
+This report shows how many units of each item were supplied (sent out) from each branch during the previous month.
+Explanation of What’s Happening -
+The system looks at all the stock movements from last month and adds up how many pieces of each item (identified by its barcode number) were sent out from every branch.
+It then groups the information by both branch and item, so you can see, for example: How many “Blue Frames” were moved from Branch A , How many “Lens Cleaner” bottles were sent out from Branch B
+— all organized clearly . This helps in understanding supply patterns and branch-level inventory flow.
+
+7.Find items in each branch where stock is below reorder level
+
+
+SELECT 
+    B.Name AS Branch_Name,
+    I.Barcode_No,
+    I.Type,
+    Inv.Stock_Level,
+    Inv.Reorder_Level
+FROM 
+    Inventory Inv
+JOIN Item I ON Inv.Barcode_No = I.Barcode_No
+JOIN Branch B ON Inv.Branch_ID = B.Branch_ID
+WHERE 
+    Inv.Stock_Level < Inv.Reorder_Level;
+
+
+Usecase -
+This action helps identify which items in each branch have stock levels below the required reorder level.
+The system checks the inventory for each branch and compares the current stock level of each item to its reorder level. If the stock is below the reorder level, the item is flagged. This ensures timely restocking and helps prevent stockouts. It also provides insight into which items need to be ordered to maintain optimal inventory levels.
+
+8. Product-Level Sales and Profitability Report
+ 
+SELECT 
+I.Barcode_No,
+I.Type,
+I.Sell_Price,
+I.Avg_Cost_Price,
+SUM(II.Quantity) AS Total_Quantity_Sold,
+SUM(II.Quantity) * I.Sell_Price AS Total_Sales,
+SUM(II.Quantity) * (I.Sell_Price - I.Avg_Cost_Price) AS Total_Profit,
+COUNT(DISTINCT O.Order_ID) AS Order_Count,
+COUNT(DISTINCT O.Mobile_No) AS Customer_Count
+FROM Item I
+JOIN Include_Items II ON I.Barcode_No = II.Barcode_No
+JOIN Orders O ON II.InvoiceNo = O.InvoiceNo
+JOIN Sales_Invoice SI ON O.InvoiceNo = SI.InvoiceNo
+GROUP BY I.Barcode_No, I.Type, I.Sell_Price, I.Avg_Cost_Price
+ORDER BY Total_Profit DESC;
+
+
+Usecase - 
+This report is designed to give a complete picture of how each product is performing in terms of sales and profit.
+The system looks at every product and calculates how many units were sold, how much total revenue was earned from those sales, and how much profit was made. It does this by multiplying the quantity sold by the selling price, and then subtracting the cost price to find the profit.
+It also shows how many different orders included that product, and how many unique customers bought it. The products are then listed starting with the one that made the highest total profit.
+This report helps in understanding which products are doing well financially and which ones may need attention.
+ 
+9. List customers who joined the loyalty program last year 
+ 
+SELECT 
+    C.Mobile_No,
+    C.Name,
+    C.Email,
+    C.Address,
+    LP.Join_Date
+FROM Customer C
+JOIN LoyaltyProgram LP ON C.Mobile_No = LP.Mobile_No
+WHERE EXTRACT(YEAR FROM LP.Join_Date) = EXTRACT(YEAR FROM CURRENT_DATE) - 1;
+ 
+Usecase -
+This report helps identify which customers joined the loyalty program in the previous year.
+The system checks the date when each customer joined the loyalty program and filters out those who registered during last year. It displays their mobile number, name, email address, home address, and the date they joined. This is useful for tracking membership growth and engagement over time.
+ 
+10.  Query to find out the  top 3 collection of frames on the basis of Stocked_quantity for a particular branch 
+ 
+ 
+SELECT 
+    F.Collection,
+    SUM(I.Stock_Level) AS Total_Stocked_Quantity
+FROM Inventory I
+JOIN Frame F ON I.Barcode_No = F.Barcode_No
+WHERE I.Branch_ID = 1
+GROUP BY F.Collection
+ORDER BY Total_Stocked_Quantity DESC
+LIMIT 3;
+
+
+Usecase -
+This report identifies which frame collections are most stocked in a particular branch.
+The system checks all items in the inventory for a given branch, adds up the stock for each frame collection, and lists the top three collections that have the highest quantity in stock. This helps in understanding inventory focus and preparing for promotions or display planning.
+ 
+11. To find the supplier offering the least supply price for each item,
+ 
+SELECT S.Supplier_ID, S.Barcode_No, S.Supply_Price
+FROM Supplies S
+WHERE S.Supply_Price = (
+    SELECT MIN(S2.Supply_Price)
+    FROM Supplies S2
+    WHERE S2.Barcode_No = S.Barcode_No
+);
+
+
+Usecase - 
+This action is useful for determining which supplier offers the most competitive price for each item. For example, if there are multiple suppliers for the same product, you might want to find the one that provides the item at the lowest cost to maximize profit margins.
+The system works by checking all suppliers for a given item and comparing their supply prices. It then selects the supplier that offers the lowest price for that item. This helps in making purchasing decisions and can be used to negotiate better deals with suppliers or choose the most cost-effective supplier for inventory management.
+
+
+12. To find out which brand is most popular among the teen age group
+ 
+SELECT F.Brand, COUNT(*) AS Total_Purchases
+FROM Customer C
+JOIN Orders O ON C.Mobile_No = O.Mobile_No
+JOIN Include_Items II ON O.InvoiceNo = II.InvoiceNo
+JOIN Frame F ON II.Barcode_No = F.Barcode_No
+WHERE 
+    DATE_PART('year', AGE(CURRENT_DATE, C.DOB)) BETWEEN 13 AND 19
+GROUP BY F.Brand
+ORDER BY Total_Purchases DESC
+LIMIT 1;
+
+
+Usecase - 
+This action helps identify which frame brand is most popular among customers in the teenage age group (ages 13 to 19).
+The system checks the orders placed by customers within this age range and counts how many times each frame brand was purchased. It then ranks the brands based on the number of purchases and displays the brand that is most frequently bought by teenagers. This information can help in targeting marketing campaigns or stocking popular brands that appeal to the teen demographic.
