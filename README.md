@@ -77,6 +77,8 @@ The ERD diagram is included in the `docs/` folder as a high-resolution PNG file.
 - 2.Sneh Shah
 - 3.Jaimin Hadvani
 - 4.Harsh Chanchlani
+- 5.Manthan Jethva
+
 
 
 
