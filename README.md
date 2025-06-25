@@ -71,12 +71,12 @@ The ERD diagram is included in the `docs/` folder as a high-resolution PNG file.
 
 ---
 
-# Group Members
+# Group Members:
 
-1.Khush patel
-2.Sneh Shah
-3.Jaimin Hadvani
-4.Harsh Chanchlani
+- 1.Khush patel
+- 2.Sneh Shah
+- 3.Jaimin Hadvani
+- 4.Harsh Chanchlani
 
 
 
